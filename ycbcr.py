@@ -10,10 +10,10 @@ def rgb2ycbcr(im_rgb):
     return im_ybr
 
 def ycbcr2rgb(im_ybr):
-    im_rgb = np.zeros_like(im_ybr, dtype=np.uint8)
+    im_rgb = np.zeros_like(im_ybr, dtype=np.float64)
     for y, row in enumerate(im_ybr):
         for x, pixel in enumerate(row):
             im_rgb[y][x][0] = pixel[0] + 0        * (pixel[1] - 128) + 1.402    * (pixel[2] - 128)
             im_rgb[y][x][1] = pixel[0] - 0.344136 * (pixel[1] - 128) - 0.714136 * (pixel[2] - 128)
             im_rgb[y][x][2] = pixel[0] + 1.772    * (pixel[1] - 128) + 0        * (pixel[2] - 128)
-    return im_rgb
+    return np.clip(im_rgb, 0, 255).astype(np.uint8)

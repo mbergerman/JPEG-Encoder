@@ -1,39 +1,65 @@
 import matplotlib.pyplot as plt
 import imageio as iio
 import numpy as np
-from scipy.fft import dct, idct
+from downsample import downsample, upsample
 from ycbcr import *
 from dqt import *
+from decode import *
 
+# Open original image
 im = iio.imread('chelsea.png')
+
+# Convert RGB data to the Y'CbCr color space
 im_ybr = rgb2ycbcr(im)
 
-im_jpeg = np.zeros((im_ybr.shape[0], im_ybr.shape[1]))
+# Perform chroma subsampling 4:2:0 (2x2)
+im_y = downsample(im_ybr[:, :, 0], 1, 1).astype(np.uint8)
+im_cb = downsample(im_ybr[:, :, 1], 2, 2).astype(np.uint8)
+im_cr = downsample(im_ybr[:, :, 2], 2, 2).astype(np.uint8)
 
-for y in range(0, len(im_ybr), 8):
-    for x in range(0, len(im_ybr[0]), 8):
-        block_y = im_ybr[y:y+8, x:x+8, 0]
-        block_shifted = np.subtract(block_y, 128, dtype=np.int8)
-
-        block_dct = dct(block_shifted)
-        block_dct = np.round(block_dct / dqt)
-
-        im_jpeg[y:y+8, x:x+8] = block_dct
+# Perform DCT and Quantization
+im_jpeg_y = dct_dqt(im_y, DQT_LUMA, 8)
+im_jpeg_cb = dct_dqt(im_cb, DQT_CHROMA, 8)
+im_jpeg_cr = dct_dqt(im_cr, DQT_CHROMA, 8)
 
 
-# Decoder:
 
-im_out = np.zeros((im_jpeg.shape[0], im_jpeg.shape[1]))
+## Decoder ##
 
-for y in range(0, len(im_jpeg), 8):
-    for x in range(0, len(im_jpeg[0]), 8):
+# Decode the image
+im_out_y = decode_jpeg(im_jpeg_y, DQT_LUMA, 8)
+im_out_cb = decode_jpeg(im_jpeg_cb, DQT_CHROMA, 8)
+im_out_cr = decode_jpeg(im_jpeg_cr, DQT_CHROMA, 8)
 
-        block_dct = im_jpeg[y:y+8, x:x+8] * dqt
+# Upsample using the nearest neighbour algorithm
+im_out_y = upsample(im_out_y, 1, 1)
+im_out_cb = upsample(im_out_cb, 2, 2)
+im_out_cr = upsample(im_out_cr, 2, 2)
 
-        block_idct = idct(block_dct).astype(np.int8)
-        im_out[y:y+8, x:x+8] = np.add(block_idct, 128).astype(np.uint8)
+# Reconstruct RGB image
+im_out_ybr = np.dstack((im_out_y, im_out_cb, im_out_cr))
+im_out_rgb = ycbcr2rgb(im_out_ybr)
 
-plt.imshow(im_out, cmap='gray')
+# Auxiliary images for displaying purposes
+im_ones = np.ones((im.shape[0], im.shape[1]))
+im_cb_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_out_cb, im_ones*128)))
+im_cr_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_ones*128, im_out_cr)))
+
+fig, ax = plt.subplots(2, 3, figsize=(12, 6), sharex=True, sharey=True)
+ax[0,0].imshow(im_out_rgb)
+ax[0,0].set_title('Decoded Image')
+ax[1,0].imshow(im_out_y, cmap='gray')
+ax[1,0].set_title('Y\' component')
+ax[0,1].imshow(im_cb_rgb)
+ax[0,1].set_title('Cb component')
+ax[1,1].imshow(im_cr_rgb)
+ax[1,1].set_title('Cr component')
+ax[0,2].imshow(im_out_cb, cmap='gray')
+ax[0,2].set_title('Cb component (grayscale)')
+ax[1,2].imshow(im_out_cr, cmap='gray')
+ax[1,2].set_title('Cr component (grayscale)')
+
+plt.savefig('plot.png', dpi=600)
 plt.show()
 
-iio.imsave('output.png', im_out)
+#iio.imsave('output.png', im_out)
