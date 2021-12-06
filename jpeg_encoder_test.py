@@ -24,9 +24,10 @@ im_dqt_cb = dct_dqt(im_cb, DQT_CHROMA, 8)
 im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA, 8)
 
 #Perfom Huffman encoding
-vectors = []
-v_huff_y = huffman_encoding(im_dqt_y,8,vectors)
-im_dehuff_y = huffman_decoding(v_huff_y, *np.shape(im_dqt_y), vectors)
+v_huff_y = huffman_encoding(im_dqt_y)
+
+#Perform Huffman decoding
+im_dehuff_y = huffman_decoding(v_huff_y, *np.shape(im_dqt_y))
 ## Decoder ##
 
 # Decode the image
@@ -48,27 +49,27 @@ im_ones = np.ones((im.shape[0], im.shape[1]))
 im_cb_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_out_cb, im_ones*128)))
 im_cr_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_ones*128, im_out_cr)))
 
-fig, ax = plt.subplots(2, 3, figsize=(12, 6), sharex=True, sharey=True)
-ax[0,0].imshow(im_out_rgb)
-ax[0,0].set_title('Decoded Image')
-ax[1,0].imshow(im_out_y, cmap='gray')
-ax[1,0].set_title('Y\' component')
-ax[0,1].imshow(im_cb_rgb)
-ax[0,1].set_title('Cb component')
-ax[1,1].imshow(im_cr_rgb)
-ax[1,1].set_title('Cr component')
-ax[0,2].imshow(im_out_cb, cmap='gray')
-ax[0,2].set_title('Cb component (grayscale)')
-ax[1,2].imshow(im_out_cr, cmap='gray')
-ax[1,2].set_title('Cr component (grayscale)')
+# fig, ax = plt.subplots(2, 3, figsize=(12, 6), sharex=True, sharey=True)
+# ax[0,0].imshow(im_out_rgb)
+# ax[0,0].set_title('Decoded Image')
+# ax[1,0].imshow(im_out_y, cmap='gray')
+# ax[1,0].set_title('Y\' component')
+# ax[0,1].imshow(im_cb_rgb)
+# ax[0,1].set_title('Cb component')
+# ax[1,1].imshow(im_cr_rgb)
+# ax[1,1].set_title('Cr component')
+# ax[0,2].imshow(im_out_cb, cmap='gray')
+# ax[0,2].set_title('Cb component (grayscale)')
+# ax[1,2].imshow(im_out_cr, cmap='gray')
+# ax[1,2].set_title('Cr component (grayscale)')
 
-plt.savefig('plot.png', dpi=600)
-plt.show()
-
-
-# fig, ax = plt.subplots(1,2, figsize=(12,6), sharex=True, sharey=True)
-# ax[0].imshow(im_out_rgb)
-# ax[0].set_title('Decoded Image')
-# ax[1].imshow(im)
-# ax[1].set_title('Original')
+# plt.savefig('plot.png', dpi=600)
 # plt.show()
+
+
+fig, ax = plt.subplots(1,2, figsize=(12,6), sharex=True, sharey=True)
+ax[0].imshow(im_out_rgb)
+ax[0].set_title('Decoded Image')
+ax[1].imshow(im)
+ax[1].set_title('Original')
+plt.show()

@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import pprint
 
 soup = BeautifulSoup(open("huffman_tables.html", encoding="utf8"), "html.parser")
 dc_table, ac_table = soup.find_all('table')

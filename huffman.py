@@ -3,7 +3,7 @@ from vectorize import Vectorize
 from bitstring import BitArray
 from Y_TABLES import *
 
-def huffman_encoding(im, block_size=8, vectors=None):
+def huffman_encoding(im, block_size=8):
     rows, cols = np.shape(im)
     dc_prev = 0
     block_bits = BitArray()
@@ -47,12 +47,10 @@ def huffman_encoding(im, block_size=8, vectors=None):
                     run = 0 
             if run != 0:
                 block_bits += BitArray('0b1010') #end of block        
-                
-            vectors.append(v)
 
     return block_bits
 
-def huffman_decoding(bits: BitArray, rows:int, cols:int, vectors,  block_size = 8):
+def huffman_decoding(bits: BitArray, rows:int, cols:int,  block_size = 8):
     s = 0
     e = 2
     dc_prev = 0
