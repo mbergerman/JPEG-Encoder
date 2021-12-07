@@ -1,3 +1,5 @@
+
+#%%
 import matplotlib.pyplot as plt
 import imageio as iio
 import numpy as np
@@ -5,49 +7,68 @@ from downsample import downsample, upsample
 from ycbcr import *
 from dqt import *
 from decode import *
-from huffman import huffman_decoding, huffman_encoding
+from huffman import huffman_decoding, huffman_encoding_without_subsampling
+from dqt_tables import DQT_LUMA, DQT_CHROMA
+from jfif import jfif
 
 # Open original image
 im = iio.imread('chelsea.png')
 
 # Convert RGB data to the Y'CbCr color space
+print('RGB2YCBCR')
 im_ybr = rgb2ycbcr(im)
 
 # Perform chroma subsampling 4:2:0 (2x2)
+print('Subsampling')
 im_y = downsample(im_ybr[:, :, 0], 1, 1).astype(np.uint8)
-im_cb = downsample(im_ybr[:, :, 1], 2, 2).astype(np.uint8)
-im_cr = downsample(im_ybr[:, :, 2], 2, 2).astype(np.uint8)
+im_cb = downsample(im_ybr[:, :, 1], 1, 1).astype(np.uint8)
+im_cr = downsample(im_ybr[:, :, 2], 1, 1).astype(np.uint8)
 
 # Perform DCT and Quantization
+print('DCT')
 im_dqt_y = dct_dqt(im_y, DQT_LUMA, 8)
 im_dqt_cb = dct_dqt(im_cb, DQT_CHROMA, 8)
 im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA, 8)
 
 #Perfom Huffman encoding
-v_huff_y = huffman_encoding(im_dqt_y)
+# v_huff_y = huffman_encoding(im_dqt_y)
+# v_huff_cb = huffman_encoding(im_dqt_cb)
+# v_huff_cr = huffman_encoding(im_dqt_cr)
+print('Huffman')
+v_huff = huffman_encoding_without_subsampling(im_dqt_y,im_dqt_cb,im_dqt_cr)
+print('Binary')
+binary_file = jfif(v_huff, *np.shape(im_dqt_y), (1,1))
 
-#Perform Huffman decoding
-im_dehuff_y = huffman_decoding(v_huff_y, *np.shape(im_dqt_y))
-## Decoder ##
+with open('binary_file.jpg', 'wb') as fo:
+    binary_file.tofile(fo)
 
-# Decode the image
-im_out_y = decode_jpeg(im_dehuff_y, DQT_LUMA, 8)
-im_out_cb = decode_jpeg(im_dqt_cb, DQT_CHROMA, 8)
-im_out_cr = decode_jpeg(im_dqt_cr, DQT_CHROMA, 8)
+#%%
 
-# Upsample using the nearest neighbour algorithm
-im_out_y = upsample(im_out_y, 1, 1)
-im_out_cb = upsample(im_out_cb, 2, 2)
-im_out_cr = upsample(im_out_cr, 2, 2)
+# #Perform Huffman decoding
+# im_dehuff_y = huffman_decoding(v_huff_y, *np.shape(im_dqt_y))
+# im_dehuff_cb = huffman_decoding(v_huff_cb, *np.shape(im_dqt_cb))
+# im_dehuff_cr = huffman_decoding(v_huff_cr, *np.shape(im_dqt_cr))
 
-# Reconstruct RGB image
-im_out_ybr = np.dstack((im_out_y, im_out_cb, im_out_cr))
-im_out_rgb = ycbcr2rgb(im_out_ybr)
+# ## Decoder ##
 
-# Auxiliary images for displaying purposes
-im_ones = np.ones((im.shape[0], im.shape[1]))
-im_cb_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_out_cb, im_ones*128)))
-im_cr_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_ones*128, im_out_cr)))
+# # Decode the image
+# im_out_y = decode_jpeg(im_dehuff_y, DQT_LUMA, 8)
+# im_out_cb = decode_jpeg(im_dehuff_cb, DQT_CHROMA, 8)
+# im_out_cr = decode_jpeg(im_dehuff_cr, DQT_CHROMA, 8)
+
+# # Upsample using the nearest neighbour algorithm
+# im_out_y = upsample(im_out_y, 1, 1)
+# im_out_cb = upsample(im_out_cb, 2, 2)
+# im_out_cr = upsample(im_out_cr, 2, 2)
+
+# # Reconstruct RGB image
+# im_out_ybr = np.dstack((im_out_y, im_out_cb, im_out_cr))
+# im_out_rgb = ycbcr2rgb(im_out_ybr)
+
+# # Auxiliary images for displaying purposes
+# im_ones = np.ones((im.shape[0], im.shape[1]))
+# im_cb_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_out_cb, im_ones*128)))
+# im_cr_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_ones*128, im_out_cr)))
 
 # fig, ax = plt.subplots(2, 3, figsize=(12, 6), sharex=True, sharey=True)
 # ax[0,0].imshow(im_out_rgb)
@@ -67,9 +88,11 @@ im_cr_rgb = ycbcr2rgb(np.dstack((im_ones*128, im_ones*128, im_out_cr)))
 # plt.show()
 
 
-fig, ax = plt.subplots(1,2, figsize=(12,6), sharex=True, sharey=True)
-ax[0].imshow(im_out_rgb)
-ax[0].set_title('Decoded Image')
-ax[1].imshow(im)
-ax[1].set_title('Original')
-plt.show()
+# fig, ax = plt.subplots(1,2, figsize=(12,6), sharex=True, sharey=True)
+# ax[0].imshow(im_out_rgb)
+# ax[0].set_title('Decoded Image')
+# ax[1].imshow(im)
+# ax[1].set_title('Original')
+# plt.show()
+
+# %%

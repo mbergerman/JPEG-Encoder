@@ -1,7 +1,7 @@
 import numpy as np
 from vectorize import Vectorize
 from bitstring import BitArray
-from Y_TABLES import *
+from DHT import *
 
 def huffman_encoding(im, block_size=8):
     rows, cols = np.shape(im)
@@ -108,3 +108,73 @@ def huffman_decoding(bits: BitArray, rows:int, cols:int,  block_size = 8):
             # add to matrix (need to know width and height)
             im[j:j+block_size, i:i+block_size] = block
     return im
+
+
+def huffman_encoding_without_subsampling(im_dqt_y,im_dqt_cb,im_dqt_cr, block_size=8):
+    rows, cols = np.shape(im_dqt_y)
+    dc_prev_1 = 0
+    dc_prev_2 = 0
+    dc_prev_3 = 0
+    vector = BitArray()
+    for j in range(0, rows, block_size):
+        for i in range(0, cols, block_size):
+            block1 = im_dqt_y[j:j+block_size, i:i+block_size]
+            block2 = im_dqt_cb[j:j+block_size, i:i+block_size]
+            block3 = im_dqt_cr[j:j+block_size, i:i+block_size]
+
+            vector += huffman_block(block1, dc_prev_1)
+            dc_prev_1 = block1[0][0]
+            vector += huffman_block(block2, dc_prev_2)
+            dc_prev_2 = block2[0][0]
+            vector += huffman_block(block3, dc_prev_3)
+            dc_prev_3 = block3[0][0]
+
+    return vector
+
+def huffman_block(block,dc_prev):
+    block_bits = BitArray()
+
+    v = Vectorize()
+    v = v.zigzag(block)
+
+    #differential encoding
+    dc = int(v[0]) - dc_prev #compute difference
+    dc_prev = int(v[0]) #save for next block
+    
+    dc_abs = int(abs(dc))
+    dc_bits = BitArray(bin(dc_abs))
+    dc_bits = dc_bits if dc>=0 else ~dc_bits
+    cat = len(dc_bits) if dc_abs>0 else 0
+    size_bits = BitArray('0b'+Y_DC_ENCODE[cat])
+    if cat>0:
+        block_bits += size_bits + dc_bits
+    else:
+        block_bits += size_bits
+
+    #run length encoding
+    run = 0
+    for k in range(1,64):
+        ac = int(v[k])
+        if ac == 0:
+            run += 1
+            if run>15:
+                code_bits = BitArray('0b'+Y_AC_ENCODE[15,0])
+                run -= 16
+                block_bits += code_bits
+        else: 
+            ac_abs = abs(ac)
+            ac_bits = BitArray(bin(ac_abs))
+            ac_bits = ac_bits if ac>=0 else ~ac_bits
+            cat = len(ac_bits)
+            code_bits = BitArray('0b'+Y_AC_ENCODE[run,cat])
+            block_bits += code_bits + ac_bits
+            run = 0 
+    if run != 0:
+        block_bits += BitArray('0b1010') #end of block      
+
+
+    block_bits_stuffed = BitArray()
+    for k in range(0,len(block_bits),8):
+        block_bits_stuffed += block_bits[k:k+8] if block_bits[k:k+8]!=BitArray('0xff') else BitArray('0xff00') 
+
+    return block_bits_stuffed
