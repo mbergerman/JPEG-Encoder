@@ -27,5 +27,4 @@ def dct(x):
 
     
 def idct(X):
-    x = fft.idct(fft.idct(X.T, norm='ortho').T, norm='ortho')
-    return x
+    return np.matmul(np.matmul(C_N_T,X), C_N)
