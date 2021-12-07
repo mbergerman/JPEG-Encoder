@@ -140,9 +140,9 @@ def huffman_encoding_without_subsampling(im_dqt_y,im_dqt_cb,im_dqt_cr, block_siz
         
     vector_stuffed = BitArray()
     for k in range(0,len(vector),8):
-        vector_stuffed += vector[k:k+8] if vector[k:k+8]!=BitArray('0xff') else BitArray('0xff00') 
-
-    return vector
+        vector_stuffed += vector[k:k+8] if vector[k:k+8]!=BitArray('0xff') else BitArray('0xff00')
+        
+    return vector_stuffed
 
 def huffman_block(block,dc_prev):
     block_bits = BitArray()

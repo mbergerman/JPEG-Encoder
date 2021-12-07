@@ -8,7 +8,7 @@ from ycbcr import *
 from dqt import *
 from decode import *
 from huffman import huffman_decoding, huffman_encoding_without_subsampling
-from dqt_tables import DQT_LUMA, DQT_CHROMA
+from dqt_tables import *
 from jfif import jfif
 
 # Open original image
@@ -26,9 +26,9 @@ im_cr = subsample(im_ybr[:, :, 2], 1, 1).astype(np.uint8)
 
 # Perform DCT and Quantization
 print('DCT')
-im_dqt_y = dct_dqt(im_y, DQT_LUMA, 8)
-im_dqt_cb = dct_dqt(im_cb, DQT_CHROMA, 8)
-im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA, 8)
+im_dqt_y = dct_dqt(im_y, DQT_LUMA_50, 8)
+im_dqt_cb = dct_dqt(im_cb, DQT_CHROMA_50, 8)
+im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA_50, 8)
 
 #Perfom Huffman encoding
 # v_huff_y = huffman_encoding(im_dqt_y)
@@ -37,7 +37,7 @@ im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA, 8)
 print('Huffman')
 v_huff = huffman_encoding_without_subsampling(im_dqt_y,im_dqt_cb,im_dqt_cr)
 print('Binary')
-binary_file = jfif(v_huff, *np.shape(im_dqt_y), (1,1))
+binary_file = jfif(v_huff, *np.shape(im_dqt_y), DQT_LUMA_50, DQT_CHROMA_50, (1,1))
 
 with open('binary_file.jpg', 'wb') as fo:
     binary_file.tofile(fo)

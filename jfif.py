@@ -4,7 +4,7 @@ from vectorize import Vectorize
 from DHT import *
 import numpy as np
 
-def jfif(vector,rows,cols, chroma_subsampling=(2,2)):
+def jfif(vector, rows, cols, luma_tbl, chroma_tbl, chroma_subsampling=(2,2)):
     file = BitArray()
     file += BitArray('0xFFD8') #start of image
 
@@ -22,7 +22,7 @@ def jfif(vector,rows,cols, chroma_subsampling=(2,2)):
     file += BitArray('0x0043') #2+65=67 bytes of length
     file += BitArray('0x00') #Pq=0 (8bits) y Tq=0 
     v = Vectorize()
-    zigzag_dqt_luma = v.zigzag(DQT_LUMA).astype(np.uint8)
+    zigzag_dqt_luma = v.zigzag(luma_tbl).astype(np.uint8)
     for k in zigzag_dqt_luma:
         file += BitArray(bytes([k]))
 
@@ -30,7 +30,7 @@ def jfif(vector,rows,cols, chroma_subsampling=(2,2)):
     file += BitArray('0x0043') #2+65=67 bytes of length
     file += BitArray('0x01') #Pq=0 (8bits) y Tq=1 
     v = Vectorize()
-    zigzag_dqt_luma = v.zigzag(DQT_CHROMA).astype(np.uint8)
+    zigzag_dqt_luma = v.zigzag(chroma_tbl).astype(np.uint8)
     for k in zigzag_dqt_luma:
         file += BitArray(bytes([k]))
 
