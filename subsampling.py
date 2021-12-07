@@ -1,6 +1,6 @@
 import numpy as np
 
-def downsample(x, h=2, v=2):
+def subsample(x, h=2, v=2):
     '''Downsampling with averaging'''
     avg_h = lambda m: np.mean(m.reshape(-1, h), 1)
     x_ds = np.apply_along_axis(avg_h, 1, x)

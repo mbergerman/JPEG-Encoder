@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import imageio as iio
 import numpy as np
-from downsample import downsample, upsample
+from subsampling import subsample, upsample
 from ycbcr import *
 from dqt import *
 from decode import *
@@ -14,15 +14,15 @@ from jfif import jfif
 # Open original image
 im = iio.imread('chelsea.png')
 
-# Convert RGB data to the Y'CbCr color space
-print('RGB2YCBCR')
+# Convert RGB data to the YCbCr color space
+print('RGB to YCBCR')
 im_ybr = rgb2ycbcr(im)
 
 # Perform chroma subsampling 4:2:0 (2x2)
 print('Subsampling')
-im_y = downsample(im_ybr[:, :, 0], 1, 1).astype(np.uint8)
-im_cb = downsample(im_ybr[:, :, 1], 1, 1).astype(np.uint8)
-im_cr = downsample(im_ybr[:, :, 2], 1, 1).astype(np.uint8)
+im_y = subsample(im_ybr[:, :, 0], 1, 1).astype(np.uint8)
+im_cb = subsample(im_ybr[:, :, 1], 1, 1).astype(np.uint8)
+im_cr = subsample(im_ybr[:, :, 2], 1, 1).astype(np.uint8)
 
 # Perform DCT and Quantization
 print('DCT')

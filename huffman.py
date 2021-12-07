@@ -1,7 +1,8 @@
 import numpy as np
-from vectorize import Vectorize
+#from vectorize import Vectorize
 from bitstring import BitArray
 from DHT import *
+from zigzag import unzigzag_scan, zigzag_scan
 
 def huffman_encoding(im, block_size=8):
     rows, cols = np.shape(im)
@@ -10,8 +11,10 @@ def huffman_encoding(im, block_size=8):
     for j in range(0, rows, block_size):
         for i in range(0, cols, block_size):
             block = im[j:j+block_size, i:i+block_size]
-            v = Vectorize()
-            v = v.zigzag(block)
+            
+            #v = Vectorize()
+            #v = v.zigzag(block)
+            v = zigzag_scan(block)
 
             #differential encoding
             dc = int(v[0]) - dc_prev #compute difference
@@ -103,8 +106,11 @@ def huffman_decoding(bits: BitArray, rows:int, cols:int,  block_size = 8):
                     e+=1
 
             # unzigzag v 
-            vectorize = Vectorize()
-            block = vectorize.unzigzag(v, block_size, block_size) 
+            #vectorize = Vectorize()
+            #block = vectorize.unzigzag(v, block_size, block_size) 
+            
+            block = unzigzag_scan(v)
+            
             # add to matrix (need to know width and height)
             im[j:j+block_size, i:i+block_size] = block
     return im
@@ -129,13 +135,22 @@ def huffman_encoding_without_subsampling(im_dqt_y,im_dqt_cb,im_dqt_cr, block_siz
             vector += huffman_block(block3, dc_prev_3)
             dc_prev_3 = block3[0][0]
 
+    while len(vector)%8 != 0:
+        vector += BitArray('0b1')
+        
+    vector_stuffed = BitArray()
+    for k in range(0,len(vector),8):
+        vector_stuffed += vector[k:k+8] if vector[k:k+8]!=BitArray('0xff') else BitArray('0xff00') 
+
     return vector
 
 def huffman_block(block,dc_prev):
     block_bits = BitArray()
 
-    v = Vectorize()
-    v = v.zigzag(block)
+    #v = Vectorize()
+    #v = v.zigzag(block)
+
+    v = zigzag_scan(block)
 
     #differential encoding
     dc = int(v[0]) - dc_prev #compute difference
@@ -172,9 +187,4 @@ def huffman_block(block,dc_prev):
     if run != 0:
         block_bits += BitArray('0b1010') #end of block      
 
-
-    block_bits_stuffed = BitArray()
-    for k in range(0,len(block_bits),8):
-        block_bits_stuffed += block_bits[k:k+8] if block_bits[k:k+8]!=BitArray('0xff') else BitArray('0xff00') 
-
-    return block_bits_stuffed
+    return block_bits
