@@ -131,8 +131,8 @@ def huffman_encoding(im_dqt_y,im_dqt_cb,im_dqt_cr, subsampling=1, block_size=8):
                 block12 = im_dqt_y[j+block_size:j+subsampling*block_size, i:i+block_size]
                 block13 = im_dqt_y[j+block_size:j+subsampling*block_size, i+block_size:i+subsampling*block_size]
 
-            row = int(j/subsampling)
-            col = int(i/subsampling)
+            row = j//subsampling
+            col = i//subsampling
             block2 = im_dqt_cb[row:row+block_size, col:col+block_size]
             block3 = im_dqt_cr[row:row+block_size, col:col+block_size]
 
