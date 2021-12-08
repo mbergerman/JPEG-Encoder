@@ -12,7 +12,8 @@ from dqt_tables import *
 from jfif import jfif
 
 # Open original image
-im = iio.imread('chelsea.png')
+file_name = 'chelsea'
+im = iio.imread(f'{file_name}.png')
 
 # Convert RGB data to the YCbCr color space
 print('RGB to YCBCR')
@@ -20,16 +21,16 @@ im_ybr = rgb2ycbcr(im)
 
 # Perform chroma subsampling 4:2:0 (2x2)
 print('Subsampling')
-s = 1 #subsampling en chroma
+s = 2 #subsampling en chroma
 im_y = subsample(im_ybr[:, :, 0], 1, 1).astype(np.uint8)
 im_cb = subsample(im_ybr[:, :, 1], s, s).astype(np.uint8)
 im_cr = subsample(im_ybr[:, :, 2], s, s).astype(np.uint8)
 
 # Perform DCT and Quantization
 print('DCT')
-im_dqt_y = dct_dqt(im_y, DQT_LUMA_50, 8)
-im_dqt_cb = dct_dqt(im_cb, DQT_CHROMA_50, 8)
-im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA_50, 8)
+im_dqt_y = dct_dqt(im_y, DQT_LUMA_100, 8)
+im_dqt_cb = dct_dqt(im_cb, DQT_CHROMA_100, 8)
+im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA_100, 8)
 
 #Perfom Huffman encoding
 # v_huff_y = huffman_encoding(im_dqt_y)
@@ -38,9 +39,9 @@ im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA_50, 8)
 print('Huffman')
 v_huff = huffman_encoding(im_dqt_y,im_dqt_cb,im_dqt_cr,subsampling=s)
 print('Binary')
-binary_file = jfif(v_huff, *np.shape(im_dqt_y), DQT_LUMA_50, DQT_CHROMA_50, (s,s))
+binary_file = jfif(v_huff, *np.shape(im_dqt_y), DQT_LUMA_100, DQT_CHROMA_100, (s,s))
 
-with open('binary_file.jpg', 'wb') as fo:
+with open(f'{file_name}.jpg', 'wb') as fo:
     binary_file.tofile(fo)
 
 #%%

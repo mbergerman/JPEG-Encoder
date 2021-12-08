@@ -19,4 +19,4 @@ DQT_CHROMA_50 = np.array( [[17, 18, 24, 47, 99, 99, 99, 99],
                         [99, 99, 99, 99, 99, 99, 99, 99] ])
 
 DQT_LUMA_100 = np.ones(shape=DQT_LUMA_50.shape)
-DQT_CHROMA_50 = np.ones(shape=DQT_CHROMA_50.shape)
+DQT_CHROMA_100 = np.ones(shape=DQT_CHROMA_50.shape)

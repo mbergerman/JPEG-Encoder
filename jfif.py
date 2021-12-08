@@ -46,16 +46,16 @@ def jfif(vector, rows, cols, luma_tbl, chroma_tbl, chroma_subsampling=(2,2)):
 
     #component 1 = Y
     file += BitArray('0x01') #component 1
-    file += BitArray('0x11') #subsampling y = 1,1
+    ss_x, ss_y = chroma_subsampling
+    file += BitArray(bytes([ss_x<<4 | ss_y])) #Y sampling factor H<<4|V
     file += BitArray('0x00') #Tq = 0 (quatization table 0 -> DQT_LUMA)
     #component 2 = Cb
     file += BitArray('0x02')
-    ss_x, ss_y = chroma_subsampling
-    file += BitArray(bytes([ss_x<<4 | ss_y])) #chroma subsampling
+    file += BitArray('0x11') #chroma sampling factor = 1,1
     file += BitArray('0x01') #Tq = 1 (quatization table 1 -> DQT_CHROMA)
     #component 3 = Cr
     file += BitArray('0x03')
-    file += BitArray(bytes([ss_x<<4 | ss_y])) #chroma subsampling
+    file += BitArray('0x11') #chroma sampling factor = 1,1
     file += BitArray('0x01') #Tq = 1 (quatization table 1 -> DQT_CHROMA)
 
     """ DHT Huffman Tables """
