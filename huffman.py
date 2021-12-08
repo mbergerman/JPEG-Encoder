@@ -1,57 +1,58 @@
+from re import sub
 import numpy as np
 #from vectorize import Vectorize
 from bitstring import BitArray
 from DHT import *
 from zigzag import unzigzag_scan, zigzag_scan
 
-def huffman_encoding(im, block_size=8):
-    rows, cols = np.shape(im)
-    dc_prev = 0
-    block_bits = BitArray()
-    for j in range(0, rows, block_size):
-        for i in range(0, cols, block_size):
-            block = im[j:j+block_size, i:i+block_size]
+# def huffman_encoding(im, block_size=8):
+#     rows, cols = np.shape(im)
+#     dc_prev = 0
+#     block_bits = BitArray()
+#     for j in range(0, rows, block_size):
+#         for i in range(0, cols, block_size):
+#             block = im[j:j+block_size, i:i+block_size]
             
-            #v = Vectorize()
-            #v = v.zigzag(block)
-            v = zigzag_scan(block)
+#             #v = Vectorize()
+#             #v = v.zigzag(block)
+#             v = zigzag_scan(block)
 
-            #differential encoding
-            dc = int(v[0]) - dc_prev #compute difference
-            dc_prev = int(v[0]) #save for next block
+#             #differential encoding
+#             dc = int(v[0]) - dc_prev #compute difference
+#             dc_prev = int(v[0]) #save for next block
             
-            dc_abs = abs(dc)
-            dc_bits = BitArray(bin(dc_abs))
-            dc_bits = dc_bits if dc>=0 else ~dc_bits
-            cat = len(dc_bits) if dc_abs>0 else 0
-            size_bits = BitArray('0b'+Y_DC_ENCODE[cat])
-            if cat>0:
-                block_bits += size_bits + dc_bits
-            else:
-                block_bits += size_bits
+#             dc_abs = abs(dc)
+#             dc_bits = BitArray(bin(dc_abs))
+#             dc_bits = dc_bits if dc>=0 else ~dc_bits
+#             cat = len(dc_bits) if dc_abs>0 else 0
+#             size_bits = BitArray('0b'+Y_DC_ENCODE[cat])
+#             if cat>0:
+#                 block_bits += size_bits + dc_bits
+#             else:
+#                 block_bits += size_bits
 
-            #run length encoding
-            run = 0
-            for k in range(1,64):
-                ac = int(v[k])
-                if ac == 0:
-                    run += 1
-                    if run>15:
-                        code_bits = BitArray('0b'+Y_AC_ENCODE[15,0])
-                        run -= 16
-                        block_bits += code_bits
-                else: 
-                    ac_abs = abs(ac)
-                    ac_bits = BitArray(bin(ac_abs))
-                    ac_bits = ac_bits if ac>=0 else ~ac_bits
-                    cat = len(ac_bits)
-                    code_bits = BitArray('0b'+Y_AC_ENCODE[run,cat])
-                    block_bits += code_bits + ac_bits
-                    run = 0 
-            if run != 0:
-                block_bits += BitArray('0b1010') #end of block        
+#             #run length encoding
+#             run = 0
+#             for k in range(1,64):
+#                 ac = int(v[k])
+#                 if ac == 0:
+#                     run += 1
+#                     if run>15:
+#                         code_bits = BitArray('0b'+Y_AC_ENCODE[15,0])
+#                         run -= 16
+#                         block_bits += code_bits
+#                 else: 
+#                     ac_abs = abs(ac)
+#                     ac_bits = BitArray(bin(ac_abs))
+#                     ac_bits = ac_bits if ac>=0 else ~ac_bits
+#                     cat = len(ac_bits)
+#                     code_bits = BitArray('0b'+Y_AC_ENCODE[run,cat])
+#                     block_bits += code_bits + ac_bits
+#                     run = 0 
+#             if run != 0:
+#                 block_bits += BitArray('0b1010') #end of block        
 
-    return block_bits
+#     return block_bits
 
 def huffman_decoding(bits: BitArray, rows:int, cols:int,  block_size = 8):
     s = 0
@@ -116,23 +117,40 @@ def huffman_decoding(bits: BitArray, rows:int, cols:int,  block_size = 8):
     return im
 
 
-def huffman_encoding_without_subsampling(im_dqt_y,im_dqt_cb,im_dqt_cr, block_size=8):
+def huffman_encoding(im_dqt_y,im_dqt_cb,im_dqt_cr, subsampling=1, block_size=8):
     rows, cols = np.shape(im_dqt_y)
     dc_prev_1 = 0
     dc_prev_2 = 0
     dc_prev_3 = 0
     vector = BitArray()
-    for j in range(0, rows, block_size):
-        for i in range(0, cols, block_size):
-            block1 = im_dqt_y[j:j+block_size, i:i+block_size]
-            block2 = im_dqt_cb[j:j+block_size, i:i+block_size]
-            block3 = im_dqt_cr[j:j+block_size, i:i+block_size]
+    for j in range(0, rows, subsampling*block_size):
+        for i in range(0, cols, subsampling*block_size):
+            block10 = im_dqt_y[j:j+block_size, i:i+block_size]
+            if subsampling==2:
+                block11 = im_dqt_y[j:j+block_size, i+block_size:i+subsampling*block_size]
+                block12 = im_dqt_y[j+block_size:j+subsampling*block_size, i:i+block_size]
+                block13 = im_dqt_y[j+block_size:j+subsampling*block_size, i+block_size:i+subsampling*block_size]
 
-            vector += huffman_block(block1, dc_prev_1)
-            dc_prev_1 = block1[0][0]
-            vector += huffman_block(block2, dc_prev_2)
+            row = int(j/subsampling)
+            col = int(i/subsampling)
+            block2 = im_dqt_cb[row:row+block_size, col:col+block_size]
+            block3 = im_dqt_cr[row:row+block_size, col:col+block_size]
+
+            # send 4 blocks of luma
+            vector += huffman_block(block10, dc_prev_1, Y_DC_ENCODE, Y_AC_ENCODE)
+            dc_prev_1 = block10[0][0]
+            if subsampling == 2:
+                vector += huffman_block(block11, dc_prev_1, Y_DC_ENCODE, Y_AC_ENCODE)
+                dc_prev_1 = block11[0][0]
+                vector += huffman_block(block12, dc_prev_1, Y_DC_ENCODE, Y_AC_ENCODE)
+                dc_prev_1 = block12[0][0]
+                vector += huffman_block(block13, dc_prev_1, Y_DC_ENCODE, Y_AC_ENCODE)
+                dc_prev_1 = block13[0][0]
+
+            # send 1 block of chroma
+            vector += huffman_block(block2, dc_prev_2, CH_DC_ENCODE, CH_AC_ENCODE)
             dc_prev_2 = block2[0][0]
-            vector += huffman_block(block3, dc_prev_3)
+            vector += huffman_block(block3, dc_prev_3, CH_DC_ENCODE, CH_AC_ENCODE)
             dc_prev_3 = block3[0][0]
 
     while len(vector)%8 != 0:
@@ -144,7 +162,7 @@ def huffman_encoding_without_subsampling(im_dqt_y,im_dqt_cb,im_dqt_cr, block_siz
         
     return vector_stuffed
 
-def huffman_block(block,dc_prev):
+def huffman_block(block,dc_prev,DC_ENCODE,AC_ENCODE):
     block_bits = BitArray()
 
     #v = Vectorize()
@@ -160,7 +178,7 @@ def huffman_block(block,dc_prev):
     dc_bits = BitArray(bin(dc_abs))
     dc_bits = dc_bits if dc>=0 else ~dc_bits
     cat = len(dc_bits) if dc_abs>0 else 0
-    size_bits = BitArray('0b'+Y_DC_ENCODE[cat])
+    size_bits = BitArray('0b'+DC_ENCODE[cat])
     if cat>0:
         block_bits += size_bits + dc_bits
     else:
@@ -173,7 +191,7 @@ def huffman_block(block,dc_prev):
         if ac == 0:
             run += 1
             if run>15:
-                code_bits = BitArray('0b'+Y_AC_ENCODE[15,0])
+                code_bits = BitArray('0b'+AC_ENCODE[15,0])
                 run -= 16
                 block_bits += code_bits
         else: 
@@ -181,7 +199,7 @@ def huffman_block(block,dc_prev):
             ac_bits = BitArray(bin(ac_abs))
             ac_bits = ac_bits if ac>=0 else ~ac_bits
             cat = len(ac_bits)
-            code_bits = BitArray('0b'+Y_AC_ENCODE[run,cat])
+            code_bits = BitArray('0b'+AC_ENCODE[run,cat])
             block_bits += code_bits + ac_bits
             run = 0 
     if run != 0:

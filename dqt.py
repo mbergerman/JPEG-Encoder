@@ -1,11 +1,11 @@
 import numpy as np
 from dct import *
-from dqt_tables import DQT_LUMA
+from dqt_tables import DQT_LUMA_50
 
 #https://www.impulseadventure.com/photo/jpeg-quantization.html
 
 
-def dct_dqt(im, dqt = DQT_LUMA, block_size = 8):
+def dct_dqt(im, dqt = DQT_LUMA_50, block_size = 8):
     im_out = np.zeros_like(im, dtype=np.float64)
 
     for j in range(0, len(im), block_size):

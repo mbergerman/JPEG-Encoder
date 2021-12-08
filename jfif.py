@@ -1,5 +1,5 @@
 from bitstring import BitArray
-from dqt_tables import DQT_LUMA, DQT_CHROMA
+from dqt_tables import *
 from vectorize import Vectorize
 from DHT import *
 import numpy as np

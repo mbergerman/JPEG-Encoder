@@ -1,6 +1,6 @@
 from dqt import *
 
-def decode_jpeg(im_jpeg, table=DQT_LUMA, block_size=8):
+def decode_jpeg(im_jpeg, table=DQT_LUMA_50, block_size=8):
     im_out = np.zeros((im_jpeg.shape[0], im_jpeg.shape[1]), np.uint8)
 
     for y in range(0, len(im_jpeg), block_size):

@@ -7,7 +7,7 @@ from subsampling import subsample, upsample
 from ycbcr import *
 from dqt import *
 from decode import *
-from huffman import huffman_decoding, huffman_encoding_without_subsampling
+from huffman import huffman_decoding, huffman_encoding
 from dqt_tables import *
 from jfif import jfif
 
@@ -20,9 +20,10 @@ im_ybr = rgb2ycbcr(im)
 
 # Perform chroma subsampling 4:2:0 (2x2)
 print('Subsampling')
+s = 1 #subsampling en chroma
 im_y = subsample(im_ybr[:, :, 0], 1, 1).astype(np.uint8)
-im_cb = subsample(im_ybr[:, :, 1], 1, 1).astype(np.uint8)
-im_cr = subsample(im_ybr[:, :, 2], 1, 1).astype(np.uint8)
+im_cb = subsample(im_ybr[:, :, 1], s, s).astype(np.uint8)
+im_cr = subsample(im_ybr[:, :, 2], s, s).astype(np.uint8)
 
 # Perform DCT and Quantization
 print('DCT')
@@ -35,9 +36,9 @@ im_dqt_cr = dct_dqt(im_cr, DQT_CHROMA_50, 8)
 # v_huff_cb = huffman_encoding(im_dqt_cb)
 # v_huff_cr = huffman_encoding(im_dqt_cr)
 print('Huffman')
-v_huff = huffman_encoding_without_subsampling(im_dqt_y,im_dqt_cb,im_dqt_cr)
+v_huff = huffman_encoding(im_dqt_y,im_dqt_cb,im_dqt_cr,subsampling=s)
 print('Binary')
-binary_file = jfif(v_huff, *np.shape(im_dqt_y), DQT_LUMA_50, DQT_CHROMA_50, (1,1))
+binary_file = jfif(v_huff, *np.shape(im_dqt_y), DQT_LUMA_50, DQT_CHROMA_50, (s,s))
 
 with open('binary_file.jpg', 'wb') as fo:
     binary_file.tofile(fo)
