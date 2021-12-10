@@ -42,7 +42,3 @@ def jpeg_encode(input_path, output_path, quality = 50):
         binary_file.tofile(fo)
 
     print('Done!')
-
-## Test code
-
-jpeg_encode('chelsea.png', 'chelsea.jpg')
